@@ -42,6 +42,7 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock_props)
 
         self.tree.wire_selected.connect(self.props.select_wire)
+        self.tree.charge_selected.connect(self.props.select_charge)
 
         # status bar
         self.setStatusBar(QStatusBar(self))
@@ -159,6 +160,8 @@ class MainWindow(QMainWindow):
                 self.scene.clear()
                 for w in new_scene.wires:
                     self.scene.add_wire(w)
+                for c in new_scene.charges:
+                    self.scene.add_charge(c)
                 self.scene.set_material(new_scene.material)
                 self.scene.set_grid(new_scene.grid)
             except Exception as e:
