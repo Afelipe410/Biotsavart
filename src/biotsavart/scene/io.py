@@ -15,10 +15,9 @@ def save_scene(scene: Scene, path: str | Path) -> None:
         "id": c.id,
         "position": c.position.tolist(),
         "q": c.q,
-        "mass": c.mass,
-        "velocity": c.velocity.tolist()
-        }
-        for c in scene.charges
+       "mass": c.mass
+       }
+       for c in scene.charges
     ],
         "wires": [w.serialize() for w in scene.wires],
         "grid": {"origin": list(scene.grid.origin),
@@ -45,7 +44,6 @@ def load_scene(path: str | Path) -> Scene:
             position=np.array(c["position"]),
             q=c["q"],
             mass=c["mass"],
-            velocity=np.array(c.get("velocity", [0.0, 0.0, 0.0])),
             id=c["id"]
         )
     )

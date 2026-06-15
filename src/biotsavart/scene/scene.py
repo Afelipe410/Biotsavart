@@ -10,7 +10,6 @@ from ..core import Wire, CartesianGrid, Material, VACUUM
 @dataclass
 class DisplaySettings:
     show_wires: bool = True
-    show_charges: bool = True
     show_arrows: bool = True
     show_streamlines: bool = False
     show_isosurfaces: bool = False

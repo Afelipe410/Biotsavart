@@ -16,20 +16,10 @@ MU0 = 4e-7 * np.pi  # vacuum permeability [T·m/A]
 
 @njit(parallel=True, fastmath=True, cache=True)
 def _kernel(M, DL, I, R, eps2):
-    """
-    Núcleo del cálculo de Biot-Savart sin estado (excluyendo el factor μ₀/(4π)).
-    Usa Numba para paralelización y optimización matemática agresiva.
-    
-    Args:
-        M: Matriz [N,3] con los puntos medios de cada segmento del cable.
-        DL: Matriz [N,3] con los vectores directores de cada segmento.
-        I: Arreglo [N] con las corrientes en cada segmento.
-        R: Matriz [P,3] con los puntos del espacio donde evaluar el campo.
-        eps2: Parámetro de suavizado al cuadrado (evita singularidades).
-        
-    Retorna:
-        Arreglo [P,3] con el vector de campo magnético bruto.
-    """
+    """Stateless Biot-Savart core (without μ₀/(4π) factor).
+    M[N,3] midpoints, DL[N,3] segment vectors, I[N] currents per segment,
+    R[P,3] field-evaluation points, eps2 = softening squared.
+    Returns B[P,3]."""
     P = R.shape[0]
     N = M.shape[0]
     B = np.zeros((P, 3))
@@ -50,10 +40,7 @@ def _kernel(M, DL, I, R, eps2):
 
 
 def assemble(wires) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Ensambla y concatena los puntos medios, vectores de longitud y corrientes de una lista de cables.
-    Prepara los datos para introducirlos en el kernel matemático optimizado.
-    """
+    """Concatenate (midpoints, dls, per-segment currents) from a list of wires."""
     Ms, DLs, Is = [], [], []
     for w in wires:
         m, dl, _ = w.sample()
@@ -65,17 +52,9 @@ def assemble(wires) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 def compute_B(wires, points: np.ndarray, mu_r: float = 1.0,
               eps: float | None = None) -> np.ndarray:
-    """
-    Calcula el campo magnético B en un conjunto de puntos de evaluación.
-    
-    Args:
-        wires: Lista de objetos Wire (conductores).
-        points: Arreglo [P,3] de puntos en el espacio.
-        mu_r: Permeabilidad magnética relativa del medio.
-        eps: Longitud de suavizado en metros. Si es None, toma 1/4 de la longitud promedio de segmento.
-        
-    Retorna:
-        Arreglo [P,3] de los vectores de campo magnético en Teslas.
+    """Compute B at field-eval points [P,3]. Returns [P,3] in Tesla.
+
+    eps: softening length (m). If None, defaults to typical segment length / 4.
     """
     M, DL, I = assemble(wires)
     if M.shape[0] == 0:
@@ -90,9 +69,7 @@ def compute_B(wires, points: np.ndarray, mu_r: float = 1.0,
 
 def compute_B_on_grid(wires, grid, mu_r: float = 1.0,
                       eps: float | None = None) -> np.ndarray:
-    """
-    Método de conveniencia: calcula el campo en una malla y lo remodela a las dimensiones [Nx,Ny,Nz,3].
-    """
+    """Convenience: returns B reshaped to [Nx,Ny,Nz,3]."""
     pts = grid.points()
     B = compute_B(wires, pts, mu_r=mu_r, eps=eps)
     return B.reshape(*grid.dims, 3)
@@ -100,19 +77,13 @@ def compute_B_on_grid(wires, grid, mu_r: float = 1.0,
 import numpy as np
 
 def lorentz_force(q, velocity, B):
-    """
-    Calcula la fuerza de Lorentz (magnética) sobre una carga puntual.
-    F = q(v x B)
-    """
+
     return q * np.cross(
         velocity,
         B
     )
 def field_at_point(scene, point):
-    """
-    Calcula el vector de campo magnético en un único punto del espacio,
-    tomando en cuenta todos los cables de la escena actual.
-    """
+
     if len(scene.wires) == 0:
 
         return np.zeros(3)

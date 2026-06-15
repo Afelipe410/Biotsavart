@@ -69,7 +69,6 @@ class Viewport(QWidget):
 
         if d.show_wires:
             self._draw_wires()
-        if getattr(d, 'show_charges', True):
             self._draw_charges()
 
         if self._B is None:

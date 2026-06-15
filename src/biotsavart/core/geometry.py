@@ -10,15 +10,7 @@ class GeometryPrimitive(ABC):
 
     @abstractmethod
     def sample(self, n: int) -> np.ndarray:
-        """
-        Calcula y retorna un conjunto de puntos a lo largo de la curva geométrica.
-        
-        Args:
-            n: Número de segmentos en los que dividir la geometría.
-            
-        Retorna:
-            Arreglo [n+1, 3] con las coordenadas de los puntos generados.
-        """
+        """Return [n+1, 3] points along the curve (n segments)."""
 
     def serialize(self) -> dict:
         return {"type": type(self).__name__, **self._payload()}
@@ -43,9 +35,7 @@ class Line(GeometryPrimitive):
 
 @dataclass
 class Arc(GeometryPrimitive):
-    """
-    Arco circular en un plano definido por un vector 'normal' y centrado en 'center'.
-    """
+    """Arc of a circle in a plane defined by `normal`, centered at `center`."""
     center: np.ndarray = field(default_factory=lambda: np.zeros(3))
     radius: float = 1.0
     normal: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0, 1.0]))
@@ -73,9 +63,7 @@ class Arc(GeometryPrimitive):
 
 @dataclass
 class Loop(GeometryPrimitive):
-    """
-    Espira circular cerrada (un arco de 0 a 2π con closed=True).
-    """
+    """Closed circular loop — Arc 0→2π with closed=True."""
     center: np.ndarray = field(default_factory=lambda: np.zeros(3))
     radius: float = 1.0
     normal: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0, 1.0]))
@@ -126,10 +114,7 @@ class Polygon(GeometryPrimitive):
 
 @dataclass
 class Spline(GeometryPrimitive):
-    """
-    Curva B-spline cúbica que pasa por los 'control_points', muestreada uniformemente 
-    respecto a la longitud de arco.
-    """
+    """Cubic B-spline through control_points, uniform arc-length sampling."""
     control_points: np.ndarray = field(default_factory=lambda: np.zeros((4, 3)))
     closed: bool = False
     degree: int = 3
@@ -165,9 +150,6 @@ GEOMETRY_REGISTRY = {
 
 
 def deserialize(d: dict) -> GeometryPrimitive:
-    """
-    Reconstruye un objeto de geometría a partir de su representación en diccionario (JSON).
-    """
     cls = GEOMETRY_REGISTRY[d["type"]]
     payload = {k: v for k, v in d.items() if k != "type"}
     for key in ("start", "end", "center", "normal"):
