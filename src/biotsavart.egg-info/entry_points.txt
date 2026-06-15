@@ -1,0 +1,2 @@
+[console_scripts]
+biotsavart = biotsavart.app:main
