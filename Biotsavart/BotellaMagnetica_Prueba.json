@@ -1,0 +1,101 @@
+{
+  "charges": [
+    {
+      "id": "6dff5673-9bb9-4529-a424-10f1a29533eb",
+      "position": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "q": 5e-06,
+      "mass": 1e-11,
+      "velocity": [
+        3.0,
+        3.0,
+        1.0
+      ]
+    },
+    {
+      "id": "698cf115-7263-42c6-b4f7-8cda52f5d81b",
+      "position": [
+        -0.5,
+        0.0,
+        0.0
+      ],
+      "q": -3e-06,
+      "mass": 1e-11,
+      "velocity": [
+        -2.0,
+        -2.0,
+        -0.5
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "id": "fe642041-3c9d-4a30-9947-cf561f51e282",
+      "label": "Bobina Superior",
+      "current": 25.0,
+      "discretization": 150,
+      "geometry": {
+        "type": "Loop",
+        "center": [
+          0.0,
+          0.0,
+          1.5
+        ],
+        "radius": 1.5,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "id": "bc768c81-7163-4a2e-937c-6984acfa8d12",
+      "label": "Bobina Inferior",
+      "current": 25.0,
+      "discretization": 150,
+      "geometry": {
+        "type": "Loop",
+        "center": [
+          0.0,
+          0.0,
+          -1.5
+        ],
+        "radius": 1.5,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      }
+    }
+  ],
+  "grid": {
+    "origin": [
+      -2.0,
+      -2.0,
+      -2.0
+    ],
+    "spacing": 0.10256410256410256,
+    "dims": [
+      40,
+      40,
+      40
+    ]
+  },
+  "material": "vacuum",
+  "display": {
+    "show_wires": true,
+    "show_arrows": true,
+    "show_streamlines": false,
+    "show_isosurfaces": false,
+    "log_scale": true,
+    "glyph_factor": 0.5,
+    "glyph_tolerance": 0.04,
+    "iso_count": 5,
+    "streamline_seeds": 12
+  }
+}
