@@ -4,6 +4,10 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Material:
+    """
+    Define un material magnético con su permeabilidad relativa (mu_r) y
+    un color sugerido para representarlo gráficamente.
+    """
     name: str
     mu_r: float
     color_hint: str = "#cccccc"

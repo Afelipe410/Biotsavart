@@ -2,8 +2,11 @@ from __future__ import annotations
 import numpy as np
 from PyQt6.QtWidgets import (
     QDialog, QFormLayout, QDoubleSpinBox, QDialogButtonBox, QComboBox,
-    QSpinBox, QHBoxLayout, QWidget, QVBoxLayout, QLabel,
+    QSpinBox, QHBoxLayout, QWidget, QVBoxLayout, QLabel,QTableWidget,
+    QTableWidgetItem,
+    QPushButton
 )
+
 
 from ..core import Wire, Line, Loop, Polygon, Spline
 from ..core.geometry import Arc
@@ -20,7 +23,21 @@ def _vec3(default=(0.0, 0.0, 0.0)) -> tuple[QWidget, list[QDoubleSpinBox]]:
 
 class AddWireDialog(QDialog):
     """Modal to create a new Wire — pick geometry kind and parameters."""
+    def _add_vertex(self):
+     table = self._fields["vertex_table"]
+     table.insertRow(table.rowCount())
 
+     for c in range(3):
+        table.setItem(
+            table.rowCount()-1,
+            c,
+            QTableWidgetItem("0")
+        )
+    def _remove_vertex(self):
+     table = self._fields["vertex_table"]
+
+     if table.rowCount() > 3:
+        table.removeRow(table.rowCount()-1)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Nuevo cable")
@@ -28,7 +45,7 @@ class AddWireDialog(QDialog):
         outer = QVBoxLayout(self)
 
         self.cb_kind = QComboBox()
-        self.cb_kind.addItems(["Line", "Loop", "Arc", "Polygon (triangle)",
+        self.cb_kind.addItems(["Line", "Loop", "Arc", "Polygon",
                                "Spline (helix)"])
         self.cb_kind.currentIndexChanged.connect(self._rebuild_form)
         outer.addWidget(QLabel("Tipo de geometría:"))
@@ -91,10 +108,39 @@ class AddWireDialog(QDialog):
             self.form.addRow("Centro:", wc); self.form.addRow("Normal:", wn)
             self.form.addRow("Radio:", sr); self.form.addRow("θ₀:", sa); self.form.addRow("θ₁:", ea)
             self._fields = dict(center=spc, normal=spn, radius=sr, start_angle=sa, end_angle=ea)
-        elif kind == "Polygon (triangle)":
-            w0, sp0 = _vec3((0, 0, 0)); w1, sp1 = _vec3((1, 0, 0)); w2, sp2 = _vec3((0.5, 1, 0))
-            self.form.addRow("V0:", w0); self.form.addRow("V1:", w1); self.form.addRow("V2:", w2)
-            self._fields["verts"] = (sp0, sp1, sp2)
+        elif kind == "Polygon":
+         self.vertex_table = QTableWidget(3, 3)
+
+         self.vertex_table.setHorizontalHeaderLabels(
+          ["X", "Y", "Z"]
+        )
+
+         defaults = [
+         [0,0,0],
+         [1,0,0],
+         [0.5,1,0]
+        ]
+
+         for r in range(3):
+          for c in range(3):
+             self.vertex_table.setItem(
+                r,
+                c,
+                QTableWidgetItem(str(defaults[r][c]))
+            )
+
+         btn_add = QPushButton("Añadir vértice")
+         btn_add.clicked.connect(self._add_vertex)
+
+         btn_remove = QPushButton("Eliminar vértice")
+         btn_remove.clicked.connect(self._remove_vertex)
+
+         self.form.addRow(self.vertex_table)
+         self.form.addRow(btn_add)
+         self.form.addRow(btn_remove)
+
+         self._fields["vertex_table"] = self.vertex_table
+
         elif kind == "Spline (helix)":
             sr = QDoubleSpinBox(); sr.setRange(0.001, 1e3); sr.setValue(0.5)
             sh = QDoubleSpinBox(); sh.setRange(0.001, 1e3); sh.setValue(1.0); sh.setSuffix(" m/turn")
@@ -120,9 +166,26 @@ class AddWireDialog(QDialog):
                        radius=f["radius"].value(),
                        start_angle=f["start_angle"].value(),
                        end_angle=f["end_angle"].value())
-        elif kind == "Polygon (triangle)":
-            verts = np.array([[s.value() for s in spv] for spv in f["verts"]])
-            geom = Polygon(vertices=verts, closed=True)
+        elif kind == "Polygon":
+
+         table = f["vertex_table"]
+
+         verts = []
+
+         for row in range(table.rowCount()):
+
+          x = float(table.item(row,0).text())
+          y = float(table.item(row,1).text())
+          z = float(table.item(row,2).text())
+
+          verts.append([x,y,z])
+
+         verts = np.array(verts)
+
+         geom = Polygon(
+            vertices=verts,
+            closed=True
+         )
         else:  # helix spline
             r = f["radius"].value(); pitch = f["pitch"].value(); n = f["turns"].value()
             t = np.linspace(0, 1, max(8, 8 * n))

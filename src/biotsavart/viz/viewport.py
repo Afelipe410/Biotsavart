@@ -48,7 +48,7 @@ class Viewport(QWidget):
 
     def set_theme_mode(self, is_dark: bool) -> None:
         if is_dark:
-            self.plotter.set_background("#1e1e1e")
+            self.plotter.set_background("#ffffff")
         else:
             self.plotter.set_background("white")
         # Ensure grid stays visible
@@ -69,6 +69,7 @@ class Viewport(QWidget):
 
         if d.show_wires:
             self._draw_wires()
+        if getattr(d, 'show_charges', True):
             self._draw_charges()
 
         if self._B is None:
@@ -235,6 +236,7 @@ class Viewport(QWidget):
 
     def _update_charges(self):
         """Update charge positions based on Lorentz force. Only refresh if charges exist."""
+        
         if not self.scene.charges or len(self.scene.charges) == 0:
             return  # No charges, skip update
         
@@ -252,6 +254,7 @@ class Viewport(QWidget):
         
         dt = 0.003
         for c in self.scene.charges:
+            
             if has_wires:
                 point_array = np.array([c.position], dtype=float)
                 B_raw = _kernel(M.astype(np.float64), DL.astype(np.float64), I.astype(np.float64), point_array, eps2)
@@ -260,6 +263,11 @@ class Viewport(QWidget):
                 B = B_zero
 
             F = lorentz_force(c.q, c.velocity, B)
+            print("Posición =", c.position)
+            print("Velocidad =", c.velocity)
+            print("B =", B)
+            print("F =", F)
+            print("----------------")
             c.update(F, dt)
             limit = 5
             c.position = np.clip(c.position, -limit, limit)

@@ -42,6 +42,7 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock_props)
 
         self.tree.wire_selected.connect(self.props.select_wire)
+        self.tree.charge_selected.connect(self.props.select_charge)
 
         # status bar
         self.setStatusBar(QStatusBar(self))
@@ -94,6 +95,8 @@ class MainWindow(QMainWindow):
         tb.addAction(act_add)
         act_demo = QAction("Demo: Helmholtz", self); act_demo.triggered.connect(self._on_demo_helmholtz)
         tb.addAction(act_demo)
+        act_theory = QAction("Fórmula Helmholtz", self); act_theory.triggered.connect(self._on_helmholtz_formula)
+        tb.addAction(act_theory)
         tb.addSeparator()
         act_recompute = QAction("Recalcular", self); act_recompute.setShortcut("F5")
         act_recompute.triggered.connect(self._schedule_compute)
@@ -142,6 +145,32 @@ class MainWindow(QMainWindow):
         self.scene.add_wire(Wire(geometry=Loop(center=np.array([0, 0, -R/2]), radius=R),
                                  current=10.0, discretization=240, label="Loop −"))
 
+    def _on_helmholtz_formula(self):
+        loops = [w for w in self.scene.wires if isinstance(w.geometry, Loop)]
+        if len(loops) == 2:
+            R = loops[0].geometry.radius
+            I = loops[0].current
+            mu0 = 4 * np.pi * 1e-7
+            mu_r = self.scene.material.mu_r
+            B = (4/5)**1.5 * (mu0 * mu_r * I) / R
+            QMessageBox.information(
+                self, 
+                "Fórmula Teórica de Helmholtz", 
+                f"Fórmula: B = (4/5)^(3/2) * (μ₀ * μ_r * I) / R\n\n"
+                f"Parámetros actuales:\n"
+                f"R = {R:.3g} m\n"
+                f"I = {I:.3g} A\n"
+                f"μ_r = {mu_r:.3g}\n\n"
+                f"Magnitud del campo teórico en el centro:\n"
+                f"B = {B:.3e} T"
+            )
+        else:
+            QMessageBox.information(
+                self,
+                "Fórmula Teórica de Helmholtz",
+                "Por favor carga primero la 'Demo: Helmholtz' o asegúrate de tener exactamente dos espiras en la escena."
+            )
+
     def _on_save(self):
         path, _ = QFileDialog.getSaveFileName(self, "Guardar escena", filter="JSON (*.json)")
         if path:
@@ -159,6 +188,8 @@ class MainWindow(QMainWindow):
                 self.scene.clear()
                 for w in new_scene.wires:
                     self.scene.add_wire(w)
+                for c in new_scene.charges:
+                    self.scene.add_charge(c)
                 self.scene.set_material(new_scene.material)
                 self.scene.set_grid(new_scene.grid)
             except Exception as e:
